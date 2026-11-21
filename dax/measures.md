@@ -92,12 +92,13 @@ Each channel's share of all transactions. `ALL` removes the channel filter in th
 
 ## 4. Customer segments
 
-Calculated column on `Transactions`:
+Both are **calculated columns** on `Transactions` (Table tools > New column), not measures. They read one row's age at a time, which a measure cannot do.
 
 ```dax
 Age Group =
 SWITCH(
     TRUE(),
+    ISBLANK(Transactions[CustomerAge]), "Unknown",
     Transactions[CustomerAge] < 25, "18-24",
     Transactions[CustomerAge] < 40, "25-39",
     Transactions[CustomerAge] < 60, "40-59",
@@ -106,11 +107,24 @@ SWITCH(
 ```
 Buckets each transaction into an age band. Conditions are checked top to bottom, so the first match wins.
 
+```dax
+Age Group Sort =
+SWITCH(
+    TRUE(),
+    ISBLANK(Transactions[CustomerAge]), 5,
+    Transactions[CustomerAge] < 25, 1,
+    Transactions[CustomerAge] < 40, 2,
+    Transactions[CustomerAge] < 60, 3,
+    4
+)
+```
+Sort helper. Set `Age Group` > Column tools > Sort by column > `Age Group Sort` so slicers and charts show age bands in order instead of alphabetically.
+
 ---
 
 ## 5. Risk indicators (rule-based)
 
-The dataset has no fraud label. These measures flag unusual activity using simple rules.
+The dataset has no fraud label. These measures flag unusual activity using simple rules: 3 or more login attempts, and the top 5% of transaction amounts.
 
 ```dax
 High Login Txns =
@@ -121,15 +135,39 @@ Transactions with 3 or more login attempts.
 ```dax
 High Login % = DIVIDE([High Login Txns], [Total Transactions])
 ```
-Share of transactions with 3 or more login attempts. Put Channel or Location on the axis to compare segments.
+Share of transactions with 3 or more login attempts. Put Channel or Age Group on the axis to compare segments.
 
 ```dax
 Large Txns =
-VAR Threshold = 1000
+VAR Threshold =
+    CALCULATE(PERCENTILE.INC(Transactions[TransactionAmount], 0.95), ALL(Transactions))
 RETURN
     CALCULATE([Total Transactions], Transactions[TransactionAmount] > Threshold)
 ```
-Count of transactions above a fixed amount. Choose the threshold after checking the amount distribution.
+Count of transactions above the 95th percentile amount. `ALL(Transactions)` fixes the threshold across the whole table, so slicers do not move it. By construction this flags about 5% of transactions, so it is a rule, not a finding.
+
+```dax
+Large Txn % = DIVIDE([Large Txns], [Total Transactions])
+```
+Share of transactions flagged as large.
+
+```dax
+High Risk Txns =
+VAR Threshold =
+    CALCULATE(PERCENTILE.INC(Transactions[TransactionAmount], 0.95), ALL(Transactions))
+RETURN
+    CALCULATE(
+        [Total Transactions],
+        Transactions[LoginAttempts] >= 3,
+        Transactions[TransactionAmount] > Threshold
+    )
+```
+Transactions that meet both rules at once (3+ login attempts and top 5% amount). The strictest flag, and the one to review first.
+
+```dax
+Max Login Attempts = MAX(Transactions[LoginAttempts])
+```
+Highest login attempt count in context. Used in the flagged accounts table.
 
 ---
 
@@ -177,7 +215,7 @@ CALCULATE(
     TOPN(5, VALUES(Dim_Location[Location]), [Total Amount])
 )
 ```
-Combined amount of the five highest-value locations. Returns a single number, so use it on a card. For a chart of the five locations, use a Top N visual filter.
+Combined amount of the five highest-value locations. Returns a single number, so use it on a card. The Top 5 bar chart on the Overview page uses a Top N visual filter instead.
 
 ```dax
 Top 5 Share % =
@@ -197,6 +235,7 @@ Share of total amount contributed by the top 5 locations.
 | Aggregate in a measure, row-level logic in a calculated column | Sections 2 and 4 |
 | `CALCULATE` replaces filters only on the columns it names | Sections 3 and 5 |
 | `ALL` in the denominator for percent of total | Sections 3 and 7 |
+| `ALL` inside a variable to fix a threshold across slicers | Section 5 |
 | `VAR / RETURN` for readability and a single evaluation | Sections 5 and 6 |
 | Table functions (`TOPN`, `PREVIOUSMONTH`) sit inside `CALCULATE` | Sections 6 and 7 |
 | `RANKX` over `ALL`, never `VALUES` | Section 7 |

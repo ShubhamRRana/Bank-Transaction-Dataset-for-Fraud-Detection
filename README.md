@@ -15,9 +15,10 @@ A retail bank wants to answer three questions:
 ## Dataset
 
 - **Source:** Kaggle, [Bank Transaction Dataset for Fraud Detection](https://www.kaggle.com/datasets/valakhorasani/bank-transaction-dataset-for-fraud-detection)
+- **Size:** 2,512 transactions across 495 accounts
 - **Grain:** one row per transaction
 - **Key fields:** TransactionID, AccountID, TransactionAmount, TransactionDate, TransactionType, Channel, Location, CustomerAge, CustomerOccupation, LoginAttempts, AccountBalance
-- **Note:** the dataset has no fraud label. "Suspicious" activity in this project is a rule-based proxy (for example, 3 or more login attempts), not a confirmed fraud flag.
+- **Note:** the dataset has no fraud label. "Suspicious" activity in this project is a rule-based proxy (3 or more login attempts, top 5% by amount), not a confirmed fraud flag.
 
 ## Data model
 
@@ -38,46 +39,70 @@ Dim_Location ─┘
 
 All relationships are one-to-many with single-direction filtering from the dimension to the fact table.
 
-## Questions answered
+## Dashboard pages
 
-### Overview
+### 1. Overview
+
 | Question | Visual |
 |---|---|
 | How many transactions, how much value, how many unique accounts, what is the average balance? | KPI cards |
 | Which channel carries the most amount? | Bar chart |
+| What share of transactions does each channel handle? | Donut |
 | Which 5 locations have the highest amount? | Top 5 bar chart |
-| Which occupations spend the most? | Bar chart |
-| What is the debit vs credit split? | Donut / bar |
+| Which occupations transact the most? | Bar chart (transaction count) |
+| What is the debit vs credit split? | Donut (transaction count) |
 
-### Risk (in progress)
+Slicers: Channel, Location, Age Group.
+
+### 2. Risk (rule-based)
+
 | Question | Visual |
 |---|---|
-| How many transactions had 3 or more login attempts? | Card |
-| Which channel has the highest share of high-login-attempt transactions? | Bar chart |
-| How many large transactions are there? | Card |
+| How many transactions had 3 or more login attempts, and what share is that? | Cards |
+| How many large transactions are there (top 5% by amount)? | Cards |
+| How many transactions meet both rules? | Card |
+| How are repeated login attempts distributed? | Bar chart |
+| Which channel and age group have the highest repeated-login share? | Bar charts |
+| Which accounts have repeated login attempts? | Table |
 
-### Trends (in progress)
+### 3. Trends (in progress)
+
 | Question | Visual |
 |---|---|
 | What is the monthly amount trend? | Line chart |
-| What is the month-over-month change? | Line / table |
-| What is the year-to-date amount? | Card / line |
+| What is the month-over-month change? | Column chart |
+| What is the year-to-date amount? | Card |
 
-## Key findings (Overview page)
+## Key findings
 
-- Total transaction value is about **$747.6K** across **495 unique accounts**, with an average transaction of about **$297.6** and an average account balance of about **$5.1K**.
-- Spend is spread almost evenly across channels: ATM about $0.26M, Branch about $0.25M, Online about $0.24M.
-- Students contribute the most by occupation (about $0.21M), with Doctor, Engineer and Retired each at about $0.18M.
-- The top 5 locations by amount are Austin, Oklahoma City, Memphis, Fort Worth and Detroit, each between about $21K and $23K.
+### Overview
+
+- Total transaction value is about **$747.6K** across **2,512 transactions** and **495 unique accounts**, with an average transaction of **$297.6** and an average account balance of about **$5.1K**.
+- Spend is spread almost evenly across channels. By amount: ATM $256.3K, Branch $250.2K, Online $241.0K. By transaction count: Branch 34.55%, ATM 33.16%, Online 32.29%. Branch has the most transactions, while ATM brings in the most money, but the gaps are small.
+- Students are the top occupation by transaction count (657), followed by Doctor (631), Engineer (625) and Retired (599).
+- The top 5 locations by amount are Austin ($22.7K), Oklahoma City ($21.7K), Memphis ($21.2K), Fort Worth ($20.8K) and Detroit ($20.6K).
+- Debit transactions make up 77.39% of transactions and credit 22.61%.
+
+### Risk
+
+- 95 of 2,512 transactions (3.78%) had 3 or more login attempts. Most transactions (2,390) had a single attempt.
+- 126 transactions (5.02%) are in the top 5% by amount. This share is set by the definition of the threshold, so it is a rule and not a finding.
+- Only 3 transactions meet both conditions (3+ login attempts and top 5% amount), making them the highest-priority cases for review.
+- Online shows the highest repeated-login share (4.56%) versus ATM (3.48%) and Branch (3.34%). The 18-24 age group is highest at 4.98%. With roughly 30 to 40 flagged transactions per segment, these differences are directional, not conclusive.
+
+### Trends
+
+To be added once the Trends page is complete.
 
 ## DAX highlights
 
 Full list with explanations in [`dax/measures.md`](dax/measures.md). Concepts used:
 
 - Aggregations: `SUM`, `AVERAGE`, `COUNTROWS`, `DISTINCTCOUNT`, `DIVIDE`
-- Filter context: `CALCULATE`, `ALL`, `REMOVEFILTERS`, `FILTER`, `VALUES`
+- Filter context: `CALCULATE`, `ALL`, `REMOVEFILTERS`, `VALUES`
 - Logic: `VAR / RETURN`, `SWITCH(TRUE())`, `IF`
-- Time intelligence: `TOTALYTD`, `PREVIOUSMONTH`, `DATEADD`
+- Statistics: `PERCENTILE.INC` for a data-driven risk threshold
+- Time intelligence: `TOTALYTD`, `PREVIOUSMONTH`
 - Ranking: `RANKX`, `TOPN`
 
 ## Repository structure
@@ -95,7 +120,7 @@ bank-transaction-analysis/
 
 | Overview | Risk | Trends |
 |---|---|---|
-| ![Overview](images/Overview.png) | ![Risk](images/Risk.png) | ![Trends](images/Trends.png) |
+| ![Overview](screenshots/overview.png) | ![Risk](screenshots/risk.png) | ![Trends](screenshots/trends.png) |
 
 ## How to open
 
@@ -111,7 +136,8 @@ Power BI Desktop, Power Query (M), DAX
 ## Limitations and next steps
 
 - The data is a single snapshot with no fraud label, so risk indicators are rule-based and should be validated against confirmed fraud cases.
-- Next steps: add a customer segmentation page, add a Region field to `Dim_Location` for a map view, and publish the report to Power BI Service.
+- The risk segments are small (about 30 to 40 flagged transactions per channel or age group), so segment differences are directional.
+- Next steps: complete the Trends page, add a Region field to `Dim_Location` for a map view, and publish the report to Power BI Service.
 
 ## Author
 
