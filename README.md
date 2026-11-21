@@ -120,7 +120,7 @@ bank-transaction-analysis/
 
 | Overview | Risk | Trends |
 |---|---|---|
-| ![Overview](images/overview.png) | ![Risk](images/risk.png) | ![Trends](images/trends.png) |
+| ![Overview](images/Overview.png) | ![Risk](images/Risk.png) | ![Trends](images/Trends.png) |
 
 ## How to open
 
