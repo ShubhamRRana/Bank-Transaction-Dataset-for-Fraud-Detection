@@ -95,7 +95,7 @@ bank-transaction-analysis/
 
 | Overview | Risk | Trends |
 |---|---|---|
-| ![Overview](screenshots/overview.png) | ![Risk](screenshots/risk.png) | ![Trends](screenshots/trends.png) |
+| ![Overview](images/overview.png) | ![Risk](images/risk.png) | ![Trends](images/trends.png) |
 
 ## How to open
 
