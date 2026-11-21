@@ -25,7 +25,7 @@ A retail bank wants to answer three questions:
 Star schema built in Power Query and the Power BI model view.
 
 ```
-Calendar ──┐
+Calendar ─────┐
 Dim_Channel ──┼──> Transactions (fact)
 Dim_Location ─┘
 ```
@@ -122,14 +122,14 @@ bank-transaction-analysis/
 ├── data/                  raw CSV (or a link if the file is too large)
 ├── powerbi/               .pbix report
 ├── dax/measures.md        all measures with explanations
-└── screenshots/           one image per dashboard page
+└── images/                one image per dashboard page
 ```
 
 ## Screenshots
 
 | Overview | Risk | Trends |
 |---|---|---|
-| ![Overview](screenshots/overview.png) | ![Risk](screenshots/risk.png) | ![Trends](screenshots/trends.png) |
+| ![Overview](images/Overview.png) | ![Risk](images/Risk.png) | ![Trends](images/Trends.png) |
 
 ## How to open
 
