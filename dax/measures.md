@@ -29,6 +29,18 @@ CALENDAR(
 
 Creates one row per date between the first and last transaction. Mark it as a date table so time intelligence works.
 
+Helper columns on `Calendar` (Table tools > New column):
+
+```dax
+Year = YEAR(Calendar[Date])
+Month Label = FORMAT(Calendar[Date], "MMM yyyy")
+Month Sort = YEAR(Calendar[Date]) * 100 + MONTH(Calendar[Date])
+```
+
+Set `Month Label` > Column tools > Sort by column > `Month Sort`, otherwise months sort alphabetically on chart axes.
+
+The data runs from 2 Jan 2023 to 1 Jan 2024. The Trends page uses a page-level filter `Calendar[Year] = 2023` to exclude the one-day 2024 stub, which would otherwise create a near-empty 13th month and distort MoM % and YTD.
+
 ---
 
 ## 2. Core KPIs
@@ -195,6 +207,30 @@ RETURN
 ```
 Month-over-month growth. The first month is blank because it has no previous month.
 
+```dax
+Avg Monthly Amount =
+AVERAGEX(VALUES(Calendar[Month Label]), [Total Amount])
+```
+Average of the monthly totals. `VALUES` makes the iterator visit each month in context, and `[Total Amount]` is evaluated per month through context transition.
+
+```dax
+Rolling 3M Amount =
+CALCULATE(
+    [Total Amount],
+    DATESINPERIOD(Calendar[Date], MAX(Calendar[Date]), -3, MONTH)
+)
+```
+Total amount over the 3 months ending at the last date in each cell. It is a 3-month total, not an average. The first two months use shorter windows because earlier data does not exist.
+
+```dax
+Peak Month =
+MAXX(
+    TOPN(1, VALUES(Calendar[Month Label]), [Total Amount]),
+    Calendar[Month Label]
+)
+```
+Name of the month with the highest total amount. `TOPN` returns a one-row table and `MAXX` turns it into a single text value.
+
 ---
 
 ## 7. Ranking
@@ -236,6 +272,8 @@ Share of total amount contributed by the top 5 locations.
 | `CALCULATE` replaces filters only on the columns it names | Sections 3 and 5 |
 | `ALL` in the denominator for percent of total | Sections 3 and 7 |
 | `ALL` inside a variable to fix a threshold across slicers | Section 5 |
+| Iterate over `VALUES` of a grouping column, then aggregate | Section 6 (`Avg Monthly Amount`) |
+| `DATESINPERIOD` anchored on `MAX(date)` for rolling windows | Section 6 |
 | `VAR / RETURN` for readability and a single evaluation | Sections 5 and 6 |
 | Table functions (`TOPN`, `PREVIOUSMONTH`) sit inside `CALCULATE` | Sections 6 and 7 |
 | `RANKX` over `ALL`, never `VALUES` | Section 7 |

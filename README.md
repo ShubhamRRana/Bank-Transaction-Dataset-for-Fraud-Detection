@@ -65,13 +65,17 @@ Slicers: Channel, Location, Age Group.
 | Which channel and age group have the highest repeated-login share? | Bar charts |
 | Which accounts have repeated login attempts? | Table |
 
-### 3. Trends (in progress)
+### 3. Trends
+
+Covers 2 Jan to 31 Dec 2023. Transactions on 1 Jan 2024 form a one-day partial period and are excluded from this page.
 
 | Question | Visual |
 |---|---|
+| What is the average monthly amount, the peak month and the year-to-date amount? | KPI cards |
 | What is the monthly amount trend? | Line chart |
-| What is the month-over-month change? | Column chart |
-| What is the year-to-date amount? | Card |
+| What is the month-over-month change? | Column chart (red/green by sign) |
+| How does the year-to-date total compare with the rolling 3-month total? | Line chart |
+| How does the repeated-login share change by month? | Column chart |
 
 ## Key findings
 
@@ -92,7 +96,11 @@ Slicers: Channel, Location, Age Group.
 
 ### Trends
 
-To be added once the Trends page is complete.
+- The average month brings in about **$62.1K**, and the 2023 total is about **$745.5K**.
+- **September 2023 is the peak month** (about $73K), after a steady climb from July.
+- **April 2023 is the low point** at about $41K (-32.8% month over month), followed by a +53.3% rebound in May. Treat May as recovery from a dip, not as underlying growth.
+- Outside April and May, monthly swings stay within roughly +/-12% (largest other moves: +21.4% in August, -11.2% in October).
+- The repeated-login share (3+ attempts) ranges from 2.05% (July) to 5.50% (February). Each month has roughly 200 transactions, so the monthly flagged counts are small and the month-to-month pattern is directional.
 
 ## DAX highlights
 
@@ -102,7 +110,8 @@ Full list with explanations in [`dax/measures.md`](dax/measures.md). Concepts us
 - Filter context: `CALCULATE`, `ALL`, `REMOVEFILTERS`, `VALUES`
 - Logic: `VAR / RETURN`, `SWITCH(TRUE())`, `IF`
 - Statistics: `PERCENTILE.INC` for a data-driven risk threshold
-- Time intelligence: `TOTALYTD`, `PREVIOUSMONTH`
+- Time intelligence: `TOTALYTD`, `PREVIOUSMONTH`, `DATESINPERIOD` (rolling 3 months)
+- Iterators: `AVERAGEX` over `VALUES` for the average monthly amount
 - Ranking: `RANKX`, `TOPN`
 
 ## Repository structure
@@ -120,7 +129,7 @@ bank-transaction-analysis/
 
 | Overview | Risk | Trends |
 |---|---|---|
-| ![Overview](images/Overview.png) | ![Risk](images/Risk.png) | ![Trends](images/Trends.png) |
+| ![Overview](screenshots/overview.png) | ![Risk](screenshots/risk.png) | ![Trends](screenshots/trends.png) |
 
 ## How to open
 
@@ -137,7 +146,8 @@ Power BI Desktop, Power Query (M), DAX
 
 - The data is a single snapshot with no fraud label, so risk indicators are rule-based and should be validated against confirmed fraud cases.
 - The risk segments are small (about 30 to 40 flagged transactions per channel or age group), so segment differences are directional.
-- Next steps: complete the Trends page, add a Region field to `Dim_Location` for a map view, and publish the report to Power BI Service.
+- The data covers a single year, so year-over-year comparisons are not possible, and the Trends page is limited to month-over-month, year-to-date and rolling views.
+- Next steps: investigate the April 2023 dip (fewer transactions or smaller ones), add a Region field to `Dim_Location` for a map view, and publish the report to Power BI Service.
 
 ## Author
 
